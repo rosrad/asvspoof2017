@@ -104,8 +104,9 @@ LogP_absCQT = log(absCQT.^2 + eps);
 
 %%% UNIFORM RESAMPLING
 kl = (B*log2(1+1/d));
-[Ures_LogP_absCQT, Ures_FreqVec] = resample(LogP_absCQT,...
-    FreqVec,1/(fmin*(2^(kl/B)-1)),1,1,'spline');
+[Ures_LogP_absCQT, Ures_FreqVec] = resample(LogP_absCQT,1,1);  %%Origin version
+% [Ures_LogP_absCQT, Ures_FreqVec] = resample(LogP_absCQT,...
+%     FreqVec,1/(fmin*(2^(kl/B)-1)),1,1,'spline');
 
 %%% DCT
 CQcepstrum = dct(Ures_LogP_absCQT);
