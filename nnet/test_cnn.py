@@ -1,5 +1,6 @@
 import torch
 import os
+import os.path as path
 from model import DNN, CNN, LCNN
 import argparse
 import torch.nn.functional as F
@@ -8,14 +9,15 @@ from torch.autograd import Variable
 from data_feeder import ASVDataSet, load_cnn_data
 from tqdm import tqdm
 from torch.utils.data import DataLoader
-
+asv_datapath=r"D:\experiments\anti\Data\ASVspoof2017_V2"
+train_protocol = path.join(asv_datapath, r"protocol_V2\ASVspoof2017_V2_train.trn.txt")
 
 def get_args():
     parser = argparse.ArgumentParser(description="generate score")
-    parser.add_argument('--pkl', type=str, default=None, help="the pkl path")
-    parser.add_argument('--tm', type=str, default='dnn', help='the training model')
+    parser.add_argument('--pkl', type=str, default="pkls/cnn/cqcc/best_dev.pkl", help="the pkl path")
+    parser.add_argument('--tm', type=str, default='cnn', help='the training model')
     parser.add_argument('--ft', '--feature_type', type=str, default='cqcc', help="the type of feature")
-    parser.add_argument('--dt', '--data_set', type=str, default='dev', help='the dataset u will test')
+    parser.add_argument('--dt', '--data_set', type=str, default='eval', help='the dataset u will test')
     args = parser.parse_args()
     return args
 
@@ -36,10 +38,9 @@ def main():
         net = net.cuda()
 
     if args.dt == "eval":
-        protocol = "../data/protocol/ASVspoof2017_eval_v2_key.trl.txt"
+        protocol = path.join(asv_datapath, r"protocol_V2\ASVspoof2017_V2_eval.trl.txt")
     else:
-        protocol = "../data/protocol/ASVspoof2017_dev.trl.txt"
-
+        protocol = path.join(asv_datapath, r"protocol_V2\ASVspoof2017_V2_dev.trl.txt")
     test_data, test_label, test_wav_ids = load_cnn_data(args.dt, protocol, mode="test", feature_type=args.ft)
 
     # tmp = np.concatenate(test_data, axis=0)
@@ -66,7 +67,7 @@ def main():
         scores[wav_id] = tmp
 
     save_dir = os.path.join("result", args.tm, args.ft)
-    os.system('mkdir -p {}'.format(save_dir))
+    os.makedirs(save_dir, exist_ok=True)
     with open(os.path.join(save_dir, args.dt+"_score.txt"), 'w', encoding='utf-8') as f:
         for k, v in scores.items():
             f.write("{} {}\n".format(k, v))

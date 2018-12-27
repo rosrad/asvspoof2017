@@ -1,10 +1,7 @@
-import bob
-import bob.measure
-import logging
+#%%
 import argparse
-import itertools
 from collections import defaultdict
-
+#%%
 
 def labelfile(filen):
     utttolabel = {}
@@ -15,6 +12,20 @@ def labelfile(filen):
     return utttolabel
 
 
+def labeltoscore(labels, scores):
+    labscore = defaultdict(list)
+    logwarns = 0
+    for utt, label in labels.items():
+        if not utt in scores:
+            logwarns = logwarns + 1
+            print("Utterance %s not found in scores" % (utt))
+            continue
+        score = scores[utt]
+        labscore[label].append(score)
+    if logwarns > 0:
+        print("Encountered %i errors" % (logwarns))
+    return labscore
+
 def scorefile(filen):
     utttoscore = {}
     with open(filen, 'r') as wp:
@@ -24,57 +35,32 @@ def scorefile(filen):
             utttoscore[utt] = float(score)
     return utttoscore
 
+#%%
+def compute_eer(scores):
+    target_scores = sorted(scores["genuine"])
+    nontarget_scores = sorted(scores["spoof"])
 
-def parseargs():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("evalscores", type=scorefile)
-    parser.add_argument("evallabels", type=labelfile)
-    parser.add_argument("-g", "--genuinelabel", default="genuine", type=str)
-    parser.add_argument('-l', '--level', default=logging.WARN,
-                        type=int, help="Logging level. Lower results in larger output")
-    return parser.parse_args()
-
-
-def labeltoscore(labels, scores):
-    labscore = defaultdict(list)
-    logwarns = 0
-    for utt, label in labels.items():
-        if not utt in scores:
-            logwarns = logwarns + 1
-            logging.warn("Utterance %s not found in scores" % (utt))
-            continue
-        score = scores[utt]
-        labscore[label].append(score)
-    if logwarns > 0:
-        logging.warn("Encountered %i errors" % (logwarns))
-    return labscore
-
+    tgt_size = len(target_scores)
+    ntgt_size = len(nontarget_scores)
+    tgt_pos = 0
+    ntgt_pos = ntgt_size-1
+    while nontarget_scores[ntgt_pos] >= target_scores[tgt_pos]:
+        tgt_pos += 1
+        ntgt_pos = max(0, ntgt_size -1 - int(float(tgt_pos)/tgt_size*ntgt_size))
+    
+    eer = float(tgt_pos)/tgt_size 
+    thresh = target_scores[tgt_pos]
+    # print("EER : {0:.4%} at threshold {1:.4f}, tgt_pos: {2}, ntgt_pos:{3} ".format(float(tgt_pos)/tgt_size, target_scores[tgt_pos], tgt_pos, ntgt_pos))
+    return eer, thresh
 
 def main():
-    args = parseargs()
-    logging.basicConfig(
-        level=args.level, format="%(asctime)s | %(levelname)s | %(message)s")
-    evallabtoscore = labeltoscore(args.evallabels, args.evalscores)
-    # positives = evallabtoscore[args.genuinelabel]
-    # for label in evallabtoscore.keys():
-    #     # Skip genuine data ( scoring with itself)
-    #     if label == args.genuinelabel:
-    #         continue
-    #     negatives = evallabtoscore[label]
-    #     eer_label = bob.measure.eer_rocch(negatives, positives)
-    #     print("[Eval] LAB: {} EER: {:=4.3f}  ".format(
-    #                  label, 100*eer_label))
-
-    evalallnegatives = list(itertools.chain.from_iterable(
-        [v for k, v in evallabtoscore.items() if k != args.genuinelabel]))
-    evalallpositives = evallabtoscore[args.genuinelabel]
-    evalthres= bob.measure.eer_threshold(evalallnegatives, evalallpositives)
-    evalfar, evalfrr = bob.measure.farfrr(
-        evalallnegatives, evalallpositives, evalthres)
-    eval_eer = bob.measure.eer_rocch(evalallnegatives, evalallpositives)
-
-    print("Evaluation set : FAR = {:.3f}%, FRR = {:.3f}%, EER = {:.3f}% \t ".format(
-        100 * evalfar, 100 * evalfrr, eval_eer*100))
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-score_file", type=str, default=r"result\cnn\cqcc\eval_score.txt")
+    parser.add_argument("-label_file", type=str, default="eval_label.txt")
+    args = parser.parse_args()
+    scores= labeltoscore(labelfile(args.label_file),scorefile(args.score_file))
+    eer, thresh = compute_eer(scores)
+    print("Evaluation set :EER = {0:.2%} at threshold = {1:.4f} ".format(eer, thresh))
 
 
 if __name__ == '__main__':
