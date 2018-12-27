@@ -1,5 +1,6 @@
 import torch
 import os
+import os.path as path
 import argparse
 import numpy as np
 from model import CNN, VGG, LCNN, RawCNN
@@ -13,18 +14,20 @@ from tqdm import tqdm
 
 # parameters
 print_str = "*"*20 + "{}" + "*"*20
-train_protocol = "../data/protocol/ASVspoof2017_train.trn.txt"
-dev_protocol = "../data/protocol/ASVspoof2017_dev.trl.txt"
+asv_datapath=r"D:\experiments\anti\Data\ASVspoof2017_V2"
+save_dir = "./result_try/rnn/"
+train_protocol = path.join(asv_datapath, r"protocol_V2\ASVspoof2017_V2_train.trn.txt")
+dev_protocol = path.join(asv_datapath, r"protocol_V2\ASVspoof2017_V2_dev.trl.txt")
 final_protocol = [train_protocol, dev_protocol]
 
 
 def get_args():
     parser = argparse.ArgumentParser(description="input the training compoents")
 
-    parser.add_argument('--ft', '--feature_type', type=str, default='mfcc', help="the feature type")
+    parser.add_argument('--ft', '--feature_type', type=str, default='cqcc', help="the feature type")
     parser.add_argument('--mode', type=str, default='train', help='train or final')
     parser.add_argument('--sd', '--save_dir', type=str, default='./pkls/', help="the save dir")
-    parser.add_argument('--tm', '--train_model', type=str, default='dnn', help="the training model")
+    parser.add_argument('--tm', '--train_model', type=str, default='cnn', help="the training model")
     parser.add_argument('--bs', '--batch_size', type=int, default=128, help='bacth_size')
     parser.add_argument('--lr', '--learning_rate', type=float, default=2e-5, help='learning rate')
     parser.add_argument('--ne', '--num_epochs', type=int, default=20, help='num epoches')
@@ -54,12 +57,12 @@ def get_test_accuracy(data_loader, net, cross_entropy):
             data, label = data.cuda(), label.cuda()
         predict = net(data)
         loss = cross_entropy(predict, label)
-        total_loss += loss.data[0]
+        total_loss += loss.item()
         _, predict_label = torch.max(predict.data, 1)
         correct += (predict_label.cpu() == label.cpu().data).sum()
         total += label.size(0)
-    acc = correct / total
-    return acc, 1e4 * total_loss / total
+    acc = float(correct) / total
+    return acc, total_loss / total
 
 
 def main():
@@ -67,8 +70,8 @@ def main():
     args = get_args()
     save_dir = os.path.join(args.sd, args.tm, args.ft)
     print(args)
-    input("*****Please check the params  also --> {} <--, Enter to continue*****".format(save_dir))
-    os.system('mkdir -p {}'.format(save_dir))
+    # input("*****Please check the params  also --> {} <--, Enter to continue*****".format(save_dir))
+    os.makedirs(save_dir, exist_ok=True)
     mode = args.mode
     batch_size = args.bs
     feature_type = args.ft
@@ -153,9 +156,9 @@ def main():
             loss = cross_entropy(predict, label.long())
             loss.backward()
             optimizer.step()
-            train_loss += loss.data[0]
+            train_loss += loss.item()
 
-        train_accuracy = correct / total
+        train_accuracy = float(correct) / total
         if mode == "final":
             if train_accuracy > best_train_accuracy:
                 best_train_accuracy = train_accuracy

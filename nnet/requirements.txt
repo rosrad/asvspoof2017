@@ -1,0 +1,9 @@
+tqdm
+librosa
+numpy
+scipy
+torch
+scipy
+sklearn
+pywt
+bob

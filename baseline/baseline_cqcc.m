@@ -22,7 +22,7 @@ addpath(genpath('bosaris_toolkit'));
 pathToDatabase = 'D:\experiments\anti\Data\ASVspoof2017_V2'
 trainProtocolFile = fullfile(pathToDatabase, 'protocol_V2', 'ASVspoof2017_V2_train.trn.txt');
 devProtocolFile = fullfile(pathToDatabase, 'protocol_V2', 'ASVspoof2017_V2_dev.trl.txt');
-evaProtocolFile = fullfile(pathToDatabase, 'protocol_V2', 'ASVspoof2017_V2_evl.trl.txt');
+evaProtocolFile = fullfile(pathToDatabase, 'protocol_V2', 'ASVspoof2017_V2_eval.trl.txt');
 
 
 % read train protocol
@@ -35,9 +35,9 @@ filelist = protocol{1};
 labels = protocol{2};
 
 fmax = 8000;
-fmin = 7000;
-B=2048;
-d=2048;
+fmin = 6000;
+B=1024;
+d=1024;
 cf=29;
 
 % get indices of genuine and spoof files
@@ -83,12 +83,12 @@ disp('Done!');
 
 % train GMM for GENUINE data
 disp('Training GMM for GENUINE...');
-[genuineGMM.m, genuineGMM.s, genuineGMM.w] = vl_gmm([genuineFeatureCell{:}], 512, 'verbose', 'MaxNumIterations', 100);
+[genuineGMM.m, genuineGMM.s, genuineGMM.w] = vl_gmm([genuineFeatureCell{:}], 512, 'verbose', 'MaxNumIterations', 500);
 disp('Done!');
 
 % train GMM for SPOOF data
 disp('Training GMM for SPOOF...');
-[spoofGMM.m, spoofGMM.s, spoofGMM.w] = vl_gmm([spoofFeatureCell{:}], 512, 'verbose', 'MaxNumIterations', 100);
+[spoofGMM.m, spoofGMM.s, spoofGMM.w] = vl_gmm([spoofFeatureCell{:}], 512, 'verbose', 'MaxNumIterations', 500);
 disp('Done!');
 
 
@@ -167,7 +167,3 @@ disp('Done!');
 [Pmiss,Pfa] = rocch(scores(strcmp(labels,'genuine')),scores(strcmp(labels,'spoof')));
 EER = rocch2eer(Pmiss,Pfa) * 100;
 fprintf('EER is %.2f\n', EER);
-
-% function parsave(fname, x)
-%     save(fname, 'x', '-v6')
-% end

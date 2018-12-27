@@ -1,5 +1,6 @@
 import torch
 import os
+import os.path as path
 from model import RNN
 from torch.autograd import Variable
 from torch import optim, nn
@@ -14,15 +15,17 @@ feature_type = "cqcc"
 mode = "train"
 num_epochs = 10
 batch_size = 4
-save_dir = "./result/rnn/"
-train_protocol = "../data/protocol/ASVspoof2017_train.trn.txt"
-dev_protocol = "../data/protocol/ASVspoof2017_dev.trl.txt"
+asv_datapath=r"D:\experiments\anti\Data\ASVspoof2017_V2"
+save_dir = "./result_try/rnn/"
+train_protocol = path.join(asv_datapath, r"protocol_V2\ASVspoof2017_V2_train.trn.txt")
+dev_protocol = path.join(asv_datapath, r"protocol_V2\ASVspoof2017_V2_dev.trl.txt")
 final_protocol = [train_protocol, dev_protocol]
 
 
 def prepare():
     # input("*****Please check the save dir --> {} <--, Enter to continue*****".format(save_dir))
-    os.system('mkdir -p {}'.format(save_dir))
+    # os.system('mkdir -p {}'.format(save_dir))
+    os.makedirs(save_dir,exist_ok=True)
 
 
 def use_cuda():
@@ -82,12 +85,12 @@ def main():
             loss.backward()
             optimizer.step()
 
-            total_loss += loss.data[0]
+            total_loss += loss.item()
             _, predict = torch.max(outputs, 1)
             correct += (predict.data == label.data).sum()
             total += label.size(0)
 
-        print("Loss: {} \t Acc: {}".format(total_loss / len(train_dataloader), correct/total))
+        print("Loss: {:.4%} \t Acc: {:.4%} for {} samples".format(total_loss / len(train_dataloader), float(correct)/total, total))
 
 if __name__ == '__main__':
     main()

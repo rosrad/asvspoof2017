@@ -43,7 +43,7 @@ def load_generael_label():
 # this will load data by frame
 def load_data(dataset, label_file, mode="train", feature_type="mfcc"):
     extend_num = 6
-    mat_pattern = "../../../data/features/{}_{}.mat"
+    mat_pattern = r"D:\experiments\anti\asvspoof2017\baseline\features\{}_{}.mat"
     if mode != "final":
         labels, wav_lists = load_label(label_file)
     else:
@@ -162,7 +162,7 @@ class ASVDataSet(Dataset):
 
 
 def load_rnn_data(dataset, label_file, mode="train", feature_type="mfcc"):
-    mat_pattern = "../../../data/features/{}_{}.mat"
+    mat_pattern = r"D:\experiments\anti\asvspoof2017\baseline\features\{}_{}.mat"
     if mode != "final":
         labels, wav_lists = load_label(label_file)
     else:
@@ -218,7 +218,7 @@ def load_rnn_data(dataset, label_file, mode="train", feature_type="mfcc"):
 
 # this will load data by wav
 def load_cnn_data(dataset, label_file, mode="train", feature_type="mfcc"):
-    mat_pattern = "../../../data/features/{}_{}.mat"
+    mat_pattern = r"D:\experiments\anti\asvspoof2017\baseline\features\{}_{}.mat"
     if mode != "final":
         labels, wav_lists = load_label(label_file)
     else:
@@ -236,7 +236,7 @@ def load_cnn_data(dataset, label_file, mode="train", feature_type="mfcc"):
     final_label = []
     final_wav_ids = []
 
-    for wav_name in tqdm(wav_lists, desc="load {} data".format(dataset)):
+    for wav_name in tqdm(wav_lists[:], desc="load {} data".format(dataset)):
         wav_id = wav_name.replace(".wav", "")
         label = labels[wav_id]
         if "T" in wav_id:

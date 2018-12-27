@@ -99,17 +99,17 @@ class CNN(nn.Module):
         self.drop_out = drop_out
 
         self.conv1 = nn.Sequential(
-            nn.Conv2d(1, 64, 11),
+            nn.Conv2d(1, 64, (1,3)),
             nn.BatchNorm2d(64),
             nn.MaxPool2d(3)
         )
         self.conv2 = nn.Sequential(
-            nn.Conv2d(64, 64, 7),
+            nn.Conv2d(64, 64, (1,3)),
             nn.BatchNorm2d(64),
             nn.MaxPool2d(3)
         )
         self.linear = nn.Sequential(
-            nn.Linear(3840, 1024),
+            nn.Linear(1152, 1024),
             nn.BatchNorm1d(1024),
             nn.ReLU(True),
             nn.Dropout(0.5),
@@ -125,9 +125,9 @@ class CNN(nn.Module):
         )
 
     def forward(self, x):
-        batch_size, dim = x.size()
-        assert dim == 1001 * 11
-        x = x.view(batch_size, 1, self.input_dim, -1)
+        batch_size, h, w = x.size()
+        # assert dim == 1001 * 11
+        x = x.view(batch_size, 1, h, w)
         x = self.conv1(x)
         x = self.conv2(x)
         x = x.view(batch_size, -1)

@@ -18,11 +18,11 @@ addpath(genpath('CQCC_v1.0'));
 addpath(genpath('bosaris_toolkit'));
 
 % set paths to the wave files and protocols
-% pathToDatabase = fullfile('..','ASVspoof2017_train_dev','wav');
-pathToDatabase = '/mnt/speechlab/users/kc430/data/final_spoof/'
-trainProtocolFile = fullfile(pathToDatabase, 'protocol', 'final.txt');
-
-evaProtocolFile = fullfile(pathToDatabase, 'protocol', 'ASVspoof2017_eval_v2_key.trl.txt');
+%pathToDatabase = fullfile('..','ASVspoof2017_train_dev','wav');
+pathToDatabase = 'D:\experiments\anti\Data\ASVspoof2017_V2'
+trainProtocolFile = fullfile(pathToDatabase, 'protocol_V2', 'ASVspoof2017_V2_train.trn.txt');
+devProtocolFile = fullfile(pathToDatabase, 'protocol_V2', 'ASVspoof2017_V2_dev.trl.txt');
+evaProtocolFile = fullfile(pathToDatabase, 'protocol_V2', 'ASVspoof2017_V2_eval.trl.txt');
 
 
 % read train protocol
@@ -53,7 +53,7 @@ parfor i=1:length(genuineIdx)
     save_name = strrep(filelist{genuineIdx(i)}, '.wav', '_cqcc.mat');
     save_path = strcat('./features/', save_name);
 
-    filePath = fullfile(pathToDatabase,'final',filelist{genuineIdx(i)});
+    filePath = fullfile(pathToDatabase,'ASVspoof2017_V2_train',filelist{genuineIdx(i)});
     [x,fs] = audioread(filePath);
 
     tmp_fea = cqcc(x, fs, B, fmax, fmin, d, cf, 'ZsdD');
@@ -63,14 +63,14 @@ parfor i=1:length(genuineIdx)
 end
 disp('Done!');
 
-% extract features for SPOOF training data and store in cell array
+%% extract features for SPOOF training data and store in cell array
 disp('Extracting features for SPOOF training data...');
 spoofFeatureCell = cell(size(spoofIdx));
 parfor i=1:length(spoofIdx)
     save_name = strrep(filelist{spoofIdx(i)}, '.wav', '_cqcc.mat');
     save_path = strcat('./features/', save_name);
 
-    filePath = fullfile(pathToDatabase,'final',filelist{spoofIdx(i)});
+    filePath = fullfile(pathToDatabase,'ASVspoof2017_V2_train',filelist{spoofIdx(i)});
     [x,fs] = audioread(filePath);
     tmp_fea = cqcc(x, fs, B, fmax, fmin, d, cf, 'ZsdD');
 
@@ -108,7 +108,7 @@ parfor i=1:length(filelist)
     save_name = strrep(filelist{i}, '.wav', '_cqcc.mat');
     save_path = strcat('./features/', save_name);
 
-    filePath = fullfile(pathToDatabase,'ASVspoof2017_eval',filelist{i});
+    filePath = fullfile(pathToDatabase,'ASVspoof2017_V2_eval',filelist{i});
     [x,fs] = audioread(filePath);
     % featrue extraction
     tmp_fea = cqcc(x, fs, B, fmax, fmin, d, cf, 'ZsdD');
@@ -129,7 +129,3 @@ disp('Done!');
 [Pmiss,Pfa] = rocch(scores(strcmp(labels,'genuine')),scores(strcmp(labels,'spoof')));
 EER = rocch2eer(Pmiss,Pfa) * 100;
 fprintf('EER is %.2f\n', EER);
-
-function parsave(fname, x)
-    save(fname, 'x', '-v6')
-end
